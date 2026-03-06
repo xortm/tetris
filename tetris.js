@@ -1,8 +1,8 @@
 // Tetris Game
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const next = document.getElementById('nextCanvas');
-const nextCtx = next.getContext('2d');
+const nextCanvas = document.getElementById('nextCanvas');
+const nextCtx = nextCanvas.getContext('2d');
 
 const BLOCK_SIZE = 30;
 const COLS = 10;
@@ -43,7 +43,7 @@ function init() {
 }
 
 function createBoard() {
-  board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
+  board = Array(ROWS).fill().map(function() { return Array(COLS).fill(null); });
 }
 
 function resetGame() {
@@ -94,13 +94,13 @@ function spawnPiece() {
 function createPiece() {
   const name = TETROMINO_NAMES[Math.floor(Math.random() * TETROMINO_NAMES.length)];
   return {
-    shape: TETROMINOES[name].shape.map(row => [...row]),
+    shape: TETROMINOES[name].shape.map(function(row) { return row.slice(); }),
     color: TETROMINOES[name].color,
     name: name
   };
 }
 
-function gameLoop(timestamp = 0) {
+function gameLoop(timestamp) {
   if (gameOver) return;
   
   if (!isPaused) {
@@ -180,9 +180,13 @@ function hardDrop() {
 }
 
 function rotate() {
-  const rotated = currentPiece.shape[0].map((_, i) =>
-    currentPiece.shape.map(row => row[i]).reverse()
-  );
+  const rotated = [];
+  for (var i = 0; i < currentPiece.shape[0].length; i++) {
+    rotated[i] = [];
+    for (var j = 0; j < currentPiece.shape.length; j++) {
+      rotated[i][j] = currentPiece.shape[currentPiece.shape.length - 1 - j][i];
+    }
+  }
   
   if (!checkCollision(currentPiece.x, currentPiece.y, rotated)) {
     currentPiece.shape = rotated;
@@ -196,8 +200,8 @@ function rotate() {
 }
 
 function checkCollision(x, y, shape) {
-  for (let row = 0; row < shape.length; row++) {
-    for (let col = 0; col < shape[row].length; col++) {
+  for (var row = 0; row < shape.length; row++) {
+    for (var col = 0; col < shape[row].length; col++) {
       if (shape[row][col]) {
         const newX = x + col;
         const newY = y + row;
@@ -216,8 +220,8 @@ function checkCollision(x, y, shape) {
 }
 
 function lockPiece() {
-  for (let row = 0; row < currentPiece.shape.length; row++) {
-    for (let col = 0; col < currentPiece.shape[row].length; col++) {
+  for (var row = 0; row < currentPiece.shape.length; row++) {
+    for (var col = 0; col < currentPiece.shape[row].length; col++) {
       if (currentPiece.shape[row][col]) {
         const y = currentPiece.y + row;
         const x = currentPiece.x + col;
@@ -232,8 +236,15 @@ function lockPiece() {
 function clearLines() {
   let linesCleared = 0;
   
-  for (let row = ROWS - 1; row >= 0; row--) {
-    if (board[row].every(cell => cell !== null)) {
+  for (var row = ROWS - 1; row >= 0; row--) {
+    let fullLine = true;
+    for (var col = 0; col < COLS; col++) {
+      if (!board[row][col]) {
+        fullLine = false;
+        break;
+      }
+    }
+    if (fullLine) {
       board.splice(row, 1);
       board.unshift(Array(COLS).fill(null));
       linesCleared++;
@@ -270,8 +281,8 @@ function drawBoard() {
   ctx.fillStyle = '#1a1a2e';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
+  for (var row = 0; row < ROWS; row++) {
+    for (var col = 0; col < COLS; col++) {
       if (board[row][col]) {
         drawBlock(ctx, col, row, board[row][col]);
       }
@@ -281,8 +292,8 @@ function drawBoard() {
 }
 
 function drawCurrentPiece() {
-  for (let row = 0; row < currentPiece.shape.length; row++) {
-    for (let col = 0; col < currentPiece.shape[row].length; col++) {
+  for (var row = 0; row < currentPiece.shape.length; row++) {
+    for (var col = 0; col < currentPiece.shape[row].length; col++) {
       if (currentPiece.shape[row][col]) {
         drawBlock(ctx, currentPiece.x + col, currentPiece.y + row, currentPiece.color);
       }
@@ -297,8 +308,8 @@ function drawNextPiece() {
     const offsetX = Math.floor((4 - nextPiece.shape[0].length) / 2);
     const offsetY = Math.floor((4 - nextPiece.shape.length) / 2);
     
-    for (let row = 0; row < nextPiece.shape.length; row++) {
-      for (let col = 0; col < nextPiece.shape[row].length; col++) {
+    for (var row = 0; row < nextPiece.shape.length; row++) {
+      for (var col = 0; col < nextPiece.shape[row].length; col++) {
         if (nextPiece.shape[row][col]) {
           drawBlock(nextCtx, offsetX + col, offsetY + row, nextPiece.color);
         }
@@ -330,7 +341,7 @@ function drawGrid(context, x, y) {
 
 function clearNextBoard() {
   nextCtx.fillStyle = '#1a1a2e';
-  nextCtx.fillRect(0, 0, next.width, next.height);
+  nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
 }
 
 // Initialize game when page loads
