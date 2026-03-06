@@ -1,38 +1,37 @@
 // Tetris Game
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const nextCanvas = document.getElementById('nextCanvas');
-const nextCtx = nextCanvas.getContext('2d');
+var canvas = document.getElementById('gameCanvas');
+var ctx = canvas.getContext('2d');
+var next = document.getElementById('nextCanvas');
+var nextCtx = next.getContext('2d');
 
-const BLOCK_SIZE = 30;
-const COLS = 10;
-const ROWS = 20;
+var BLOCK_SIZE = 30;
+var COLS = 10;
+var ROWS = 20;
 
 // Tetromino shapes and colors
-const TETROMINOES = {
-  I: { shape: [[1, 1, 1, 1]], color: '#00f0f0' },
-  J: { shape: [[1, 0, 0], [1, 1, 1]], color: '#0000f0' },
-  L: { shape: [[0, 0, 1], [1, 1, 1]], color: '#f0a000' },
-  O: { shape: [[1, 1], [1, 1]], color: '#f0f000' },
-  S: { shape: [[0, 1, 1], [1, 1, 0]], color: '#00f000' },
-  T: { shape: [[0, 1, 0], [1, 1, 1]], color: '#a000f0' },
-  Z: { shape: [[1, 1, 0], [0, 1, 1]], color: '#f00000' }
+var TETROMINOES = {
+  'I': { shape: [[1, 1, 1, 1]], color: '#00f0f0' },
+  'J': { shape: [[1, 0, 0], [1, 1, 1]], color: '#0000f0' },
+  'L': { shape: [[0, 0, 1], [1, 1, 1]], color: '#f0a000' },
+  'O': { shape: [[1, 1], [1, 1]], color: '#f0f000' },
+  'S': { shape: [[0, 1, 1], [1, 1, 0]], color: '#00f000' },
+  'T': { shape: [[0, 1, 0], [1, 1, 1]], color: '#a000f0' },
+  'Z': { shape: [[1, 1, 0], [0, 1, 1]], color: '#f00000' }
 };
 
-const TETROMINO_NAMES = ['I', 'J', 'L', 'O', 'S', 'T', 'Z'];
+var TETROMINO_NAMES = ['I', 'J', 'L', 'O', 'S', 'T', 'Z'];
 
-let board = [];
-let currentPiece = null;
-let nextPiece = null;
-let score = 0;
-let level = 1;
-let lines = 0;
-let gameOver = false;
-let isPaused = false;
-let dropInterval = 1000;
-let lastDropTime = 0;
+var board = [];
+var currentPiece = null;
+var nextPiece = null;
+var score = 0;
+var level = 1;
+var lines = 0;
+var gameOver = false;
+var isPaused = false;
+var dropInterval = 1000;
+var lastDropTime = 0;
 
-// Initialize game
 function init() {
   createBoard();
   resetGame();
@@ -43,7 +42,14 @@ function init() {
 }
 
 function createBoard() {
-  board = Array(ROWS).fill().map(function() { return Array(COLS).fill(null); });
+  board = [];
+  for (var i = 0; i < ROWS; i++) {
+    var row = [];
+    for (var j = 0; j < COLS; j++) {
+      row.push(null);
+    }
+    board.push(row);
+  }
 }
 
 function resetGame() {
@@ -69,7 +75,10 @@ function startGame() {
 function togglePause() {
   if (!gameOver && currentPiece) {
     isPaused = !isPaused;
-    document.getElementById('pauseBtn').textContent = isPaused ? '继续' : '暂停';
+    var pauseBtn = document.getElementById('pauseBtn');
+    if (pauseBtn) {
+      pauseBtn.textContent = isPaused ? '继续' : '暂停';
+    }
   }
 }
 
@@ -92,10 +101,18 @@ function spawnPiece() {
 }
 
 function createPiece() {
-  const name = TETROMINO_NAMES[Math.floor(Math.random() * TETROMINO_NAMES.length)];
+  var nameIndex = Math.floor(Math.random() * TETROMINO_NAMES.length);
+  var name = TETROMINO_NAMES[nameIndex];
+  var tetromino = TETROMINOES[name];
+  
+  var shape = [];
+  for (var i = 0; i < tetromino.shape.length; i++) {
+    shape.push(tetromino.shape[i].slice());
+  }
+  
   return {
-    shape: TETROMINOES[name].shape.map(function(row) { return row.slice(); }),
-    color: TETROMINOES[name].color,
+    shape: shape,
+    color: tetromino.color,
     name: name
   };
 }
@@ -104,7 +121,9 @@ function gameLoop(timestamp) {
   if (gameOver) return;
   
   if (!isPaused) {
-    const deltaTime = timestamp - lastDropTime;
+    if (!lastDropTime) lastDropTime = timestamp;
+    
+    var deltaTime = timestamp - lastDropTime;
     
     if (deltaTime > dropInterval) {
       moveDown();
@@ -180,11 +199,14 @@ function hardDrop() {
 }
 
 function rotate() {
-  const rotated = [];
-  for (var i = 0; i < currentPiece.shape[0].length; i++) {
+  var rows = currentPiece.shape.length;
+  var cols = currentPiece.shape[0].length;
+  var rotated = [];
+  
+  for (var i = 0; i < cols; i++) {
     rotated[i] = [];
-    for (var j = 0; j < currentPiece.shape.length; j++) {
-      rotated[i][j] = currentPiece.shape[currentPiece.shape.length - 1 - j][i];
+    for (var j = 0; j < rows; j++) {
+      rotated[i][j] = currentPiece.shape[rows - 1 - j][i];
     }
   }
   
@@ -203,8 +225,8 @@ function checkCollision(x, y, shape) {
   for (var row = 0; row < shape.length; row++) {
     for (var col = 0; col < shape[row].length; col++) {
       if (shape[row][col]) {
-        const newX = x + col;
-        const newY = y + row;
+        var newX = x + col;
+        var newY = y + row;
         
         if (newX < 0 || newX >= COLS || newY >= ROWS) {
           return true;
@@ -223,8 +245,8 @@ function lockPiece() {
   for (var row = 0; row < currentPiece.shape.length; row++) {
     for (var col = 0; col < currentPiece.shape[row].length; col++) {
       if (currentPiece.shape[row][col]) {
-        const y = currentPiece.y + row;
-        const x = currentPiece.x + col;
+        var y = currentPiece.y + row;
+        var x = currentPiece.x + col;
         if (y >= 0) {
           board[y][x] = currentPiece.color;
         }
@@ -234,10 +256,10 @@ function lockPiece() {
 }
 
 function clearLines() {
-  let linesCleared = 0;
+  var linesCleared = 0;
   
   for (var row = ROWS - 1; row >= 0; row--) {
-    let fullLine = true;
+    var fullLine = true;
     for (var col = 0; col < COLS; col++) {
       if (!board[row][col]) {
         fullLine = false;
@@ -246,7 +268,11 @@ function clearLines() {
     }
     if (fullLine) {
       board.splice(row, 1);
-      board.unshift(Array(COLS).fill(null));
+      var newRow = [];
+      for (var j = 0; j < COLS; j++) {
+        newRow.push(null);
+      }
+      board.unshift(newRow);
       linesCleared++;
       row++;
     }
@@ -258,7 +284,7 @@ function clearLines() {
 }
 
 function updateScore(linesCleared) {
-  const points = [0, 100, 300, 500, 800];
+  var points = [0, 100, 300, 500, 800];
   score += points[linesCleared] * level;
   lines += linesCleared;
   
@@ -271,12 +297,15 @@ function updateScore(linesCleared) {
 }
 
 function updateStats() {
-  document.getElementById('score').textContent = score;
-  document.getElementById('level').textContent = level;
-  document.getElementById('lines').textContent = lines;
+  var scoreEl = document.getElementById('score');
+  var levelEl = document.getElementById('level');
+  var linesEl = document.getElementById('lines');
+  
+  if (scoreEl) scoreEl.textContent = score;
+  if (levelEl) levelEl.textContent = level;
+  if (linesEl) linesEl.textContent = lines;
 }
 
-// Drawing functions
 function drawBoard() {
   ctx.fillStyle = '#1a1a2e';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -292,6 +321,8 @@ function drawBoard() {
 }
 
 function drawCurrentPiece() {
+  if (!currentPiece) return;
+  
   for (var row = 0; row < currentPiece.shape.length; row++) {
     for (var col = 0; col < currentPiece.shape[row].length; col++) {
       if (currentPiece.shape[row][col]) {
@@ -304,27 +335,26 @@ function drawCurrentPiece() {
 function drawNextPiece() {
   clearNextBoard();
   
-  if (nextPiece) {
-    const offsetX = Math.floor((4 - nextPiece.shape[0].length) / 2);
-    const offsetY = Math.floor((4 - nextPiece.shape.length) / 2);
-    
-    for (var row = 0; row < nextPiece.shape.length; row++) {
-      for (var col = 0; col < nextPiece.shape[row].length; col++) {
-        if (nextPiece.shape[row][col]) {
-          drawBlock(nextCtx, offsetX + col, offsetY + row, nextPiece.color);
-        }
+  if (!nextPiece) return;
+  
+  var offsetX = Math.floor((4 - nextPiece.shape[0].length) / 2);
+  var offsetY = Math.floor((4 - nextPiece.shape.length) / 2);
+  
+  for (var row = 0; row < nextPiece.shape.length; row++) {
+    for (var col = 0; col < nextPiece.shape[row].length; col++) {
+      if (nextPiece.shape[row][col]) {
+        drawBlock(nextCtx, offsetX + col, offsetY + row, nextPiece.color);
       }
     }
   }
 }
 
 function drawBlock(context, x, y, color) {
-  const blockSize = BLOCK_SIZE;
+  var blockSize = BLOCK_SIZE;
   
   context.fillStyle = color;
   context.fillRect(x * blockSize + 1, y * blockSize + 1, blockSize - 2, blockSize - 2);
   
-  // Add 3D effect
   context.fillStyle = 'rgba(255, 255, 255, 0.3)';
   context.fillRect(x * blockSize + 1, y * blockSize + 1, blockSize - 2, 3);
   context.fillRect(x * blockSize + 1, y * blockSize + 1, 3, blockSize - 2);
@@ -341,8 +371,7 @@ function drawGrid(context, x, y) {
 
 function clearNextBoard() {
   nextCtx.fillStyle = '#1a1a2e';
-  nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+  nextCtx.fillRect(0, 0, next.width, next.height);
 }
 
-// Initialize game when page loads
 window.onload = init;
