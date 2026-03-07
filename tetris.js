@@ -39,6 +39,93 @@ function init() {
   document.getElementById('startBtn').addEventListener('click', startGame);
   document.getElementById('pauseBtn').addEventListener('click', togglePause);
   document.addEventListener('keydown', handleKeyPress);
+  
+  // 移动端控制按钮
+  initMobileControls();
+}
+
+// 初始化移动端控制
+function initMobileControls() {
+  var mobileControls = document.getElementById('mobileControls');
+  if (!mobileControls) return;
+  
+  var buttons = mobileControls.querySelectorAll('.control-btn');
+  
+  buttons.forEach(function(btn) {
+    var action = btn.getAttribute('data-action');
+    if (!action) return;
+    
+    // 触摸开始 - 防止默认行为
+    btn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      handleMobileAction(action);
+      btn.classList.add('active');
+    }, { passive: false });
+    
+    // 鼠标点击（桌面端测试）
+    btn.addEventListener('mousedown', function(e) {
+      if (window.innerWidth <= 768) {
+        e.preventDefault();
+        handleMobileAction(action);
+      }
+    });
+    
+    // 触摸结束
+    btn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      btn.classList.remove('active');
+    }, { passive: false });
+    
+    // 鼠标松开
+    btn.addEventListener('mouseup', function(e) {
+      btn.classList.remove('active');
+    });
+    
+    // 触摸取消
+    btn.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+      btn.classList.remove('active');
+    }, { passive: false });
+  });
+}
+
+// 处理移动端操作
+function handleMobileAction(action) {
+  if (gameOver) return;
+  
+  switch(action) {
+    case 'up':
+      if (!isPaused) rotate();
+      break;
+    case 'down':
+      if (!isPaused) moveDown();
+      break;
+    case 'left':
+      if (!isPaused) moveLeft();
+      break;
+    case 'right':
+      if (!isPaused) moveRight();
+      break;
+    case 'rotate':
+      if (!isPaused) rotate();
+      break;
+    case 'drop':
+      if (!isPaused) hardDrop();
+      break;
+    case 'pause':
+      togglePause();
+      // 更新移动端暂停按钮状态
+      updateMobilePauseButton();
+      break;
+  }
+}
+
+// 更新移动端暂停按钮状态
+function updateMobilePauseButton() {
+  var pauseBtn = document.querySelector('.btn-pause .btn-label');
+  if (pauseBtn) {
+    pauseBtn.textContent = isPaused ? '继续' : '暂停';
+  }
 }
 
 function createBoard() {

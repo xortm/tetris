@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/tetris/assets/index-Dmn5jw22.css">
+  <link rel="stylesheet" crossorigin href="/tetris/assets/index-BUUDIk7p.css">
 </head>
 <body>
     <div class="container">
@@ -80,6 +80,62 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 移动端控制按钮 -->
+    <div class="mobile-controls" id="mobileControls">
+        <div class="controls-wrapper">
+            <!-- D-Pad 方向按钮 -->
+            <div class="d-pad">
+                <button class="control-btn btn-up" data-action="up">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M12 5L19 12M12 5L5 12M12 5V19"/>
+                    </svg>
+                </button>
+                <div class="d-pad-row">
+                    <button class="control-btn btn-left" data-action="left">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M5 12L12 5M5 12L12 19M5 12H19"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn btn-down" data-action="down">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M12 19L5 12M12 19L19 12M12 19V5"/>
+                        </svg>
+                    </button>
+                    <button class="control-btn btn-right" data-action="right">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M19 12L12 5M19 12L12 19M19 12H5"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 功能按钮 -->
+            <div class="action-buttons">
+                <button class="control-btn btn-rotate" data-action="rotate">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M3 12a9 9 0 0 1 9-9M9 3l3 3-3 3"/>
+                        <path d="M12 21a9 9 0 0 0 9-9"/>
+                    </svg>
+                    <span class="btn-label">旋转</span>
+                </button>
+                <button class="control-btn btn-drop" data-action="drop">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M12 3v18"/>
+                        <path d="m16 17-4 4-4-4"/>
+                    </svg>
+                    <span class="btn-label">下落</span>
+                </button>
+                <button class="control-btn btn-pause" data-action="pause">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <rect x="6" y="4" width="4" height="16" rx="1"/>
+                        <rect x="14" y="4" width="4" height="16" rx="1"/>
+                    </svg>
+                    <span class="btn-label">暂停</span>
+                </button>
             </div>
         </div>
     </div>
