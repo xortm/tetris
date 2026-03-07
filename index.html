@@ -115,28 +115,53 @@
             
             <!-- 功能按钮 -->
             <div class="action-buttons">
-                <button class="control-btn btn-rotate" data-action="rotate">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <button class="control-btn btn-rotate" data-action="rotate" aria-label="旋转">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M3 12a9 9 0 0 1 9-9M9 3l3 3-3 3"/>
                         <path d="M12 21a9 9 0 0 0 9-9"/>
                     </svg>
-                    <span class="btn-label">旋转</span>
                 </button>
-                <button class="control-btn btn-drop" data-action="drop">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <button class="control-btn btn-drop" data-action="drop" aria-label="直接下落">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M12 3v18"/>
                         <path d="m16 17-4 4-4-4"/>
                     </svg>
-                    <span class="btn-label">下落</span>
                 </button>
-                <button class="control-btn btn-pause" data-action="pause">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <button class="control-btn btn-pause" data-action="pause" aria-label="暂停/继续">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <rect x="6" y="4" width="4" height="16" rx="1"/>
                         <rect x="14" y="4" width="4" height="16" rx="1"/>
                     </svg>
-                    <span class="btn-label">暂停</span>
                 </button>
             </div>
+        </div>
+    </div>
+    
+    <!-- 移动端分数显示 -->
+    <div class="mobile-score" id="mobileScore">
+        <div class="score-item">
+            <span class="score-label">分数</span>
+            <span id="mobileScoreValue" class="score-value">0</span>
+        </div>
+        <div class="score-item">
+            <span class="score-label">等级</span>
+            <span id="mobileLevelValue" class="score-value">1</span>
+        </div>
+    </div>
+    
+    <!-- 连击提示 -->
+    <div class="combo-display" id="comboDisplay"></div>
+    
+    <!-- 消除动画画布 -->
+    <canvas id="effectsCanvas" class="effects-canvas"></canvas>
+    
+    <!-- 开始提示 -->
+    <div class="start-hint" id="startHint">
+        <div class="hint-content">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+            </svg>
+            <p>点击"开始游戏"</p>
         </div>
     </div>
     

@@ -42,6 +42,12 @@ function init() {
   
   // 移动端控制按钮
   initMobileControls();
+  
+  // 初始化效果系统
+  initEffects();
+  
+  // 显示开始提示
+  showStartHint();
 }
 
 // 初始化移动端控制
@@ -376,6 +382,7 @@ function lockPiece() {
 
 function clearLines() {
   var linesCleared = 0;
+  var clearedRows = [];
   
   for (var row = ROWS - 1; row >= 0; row--) {
     var fullLine = true;
@@ -386,6 +393,7 @@ function clearLines() {
       }
     }
     if (fullLine) {
+      clearedRows.push(row);
       board.splice(row, 1);
       var newRow = [];
       for (var j = 0; j < COLS; j++) {
@@ -398,6 +406,12 @@ function clearLines() {
   }
   
   if (linesCleared > 0) {
+    // 显示连击提示
+    showCombo(linesCleared);
+    
+    // 创建消除动画
+    createClearEffects(clearedRows, linesCleared);
+    
     updateScore(linesCleared);
   }
 }
@@ -423,6 +437,13 @@ function updateStats() {
   if (scoreEl) scoreEl.textContent = score;
   if (levelEl) levelEl.textContent = level;
   if (linesEl) linesEl.textContent = lines;
+  
+  // 更新移动端分数显示
+  var mobileScoreEl = document.getElementById('mobileScoreValue');
+  var mobileLevelEl = document.getElementById('mobileLevelValue');
+  
+  if (mobileScoreEl) mobileScoreEl.textContent = score;
+  if (mobileLevelEl) mobileLevelEl.textContent = level;
 }
 
 function drawBoard() {
@@ -491,6 +512,260 @@ function drawGrid(context, x, y) {
 function clearNextBoard() {
   nextCtx.fillStyle = '#1a1a2e';
   nextCtx.fillRect(0, 0, next.width, next.height);
+}
+
+// ========================================
+// 连击提示系统
+// ========================================
+
+function showCombo(linesCleared) {
+  var comboDisplay = document.getElementById('comboDisplay');
+  if (!comboDisplay) return;
+  
+  var text = '';
+  var subtext = '';
+  
+  switch(linesCleared) {
+    case 1:
+      text = 'SINGLE!';
+      subtext = '消除 1 行';
+      break;
+    case 2:
+      text = 'DOUBLE!!';
+      subtext = '消除 2 行';
+      break;
+    case 3:
+      text = 'TRIPLE!!!';
+      subtext = '消除 3 行';
+      break;
+    case 4:
+      text = 'TETRIS!!!!';
+      subtext = '完美消除!';
+      break;
+    default:
+      text = linesCleared + ' LINES!';
+      subtext = '超级连击!';
+  }
+  
+  comboDisplay.innerHTML = '';
+  
+  var textEl = document.createElement('div');
+  textEl.className = 'combo-text';
+  textEl.textContent = text;
+  comboDisplay.appendChild(textEl);
+  
+  var subtextEl = document.createElement('div');
+  subtextEl.className = 'combo-subtext';
+  subtextEl.textContent = subtext;
+  comboDisplay.appendChild(subtextEl);
+  
+  comboDisplay.style.display = 'block';
+  comboDisplay.style.opacity = '1';
+  comboDisplay.style.transform = 'translate(-50%, -50%) scale(1)';
+  
+  setTimeout(function() {
+    comboDisplay.style.display = 'none';
+  }, 1500);
+}
+
+// ========================================
+// 消除动画效果系统
+// ========================================
+
+var effectsCanvas = null;
+var effectsCtx = null;
+var effects = [];
+
+function initEffects() {
+  effectsCanvas = document.getElementById('effectsCanvas');
+  if (!effectsCanvas) return;
+  
+  effectsCtx = effectsCanvas.getContext('2d');
+  effectsCanvas.width = window.innerWidth;
+  effectsCanvas.height = window.innerHeight;
+  
+  window.addEventListener('resize', function() {
+    effectsCanvas.width = window.innerWidth;
+    effectsCanvas.height = window.innerHeight;
+  });
+  
+  animateEffects();
+}
+
+function createClearEffects(rows, linesCleared) {
+  if (!effectsCtx) return;
+  
+  rows.forEach(function(row) {
+    for (var col = 0; col < COLS; col++) {
+      var x = col * BLOCK_SIZE;
+      var y = row * BLOCK_SIZE;
+      var color = board[row] && board[row][col] ? board[row][col] : '#ffffff';
+      
+      // 创建粒子效果
+      var particleCount = 8 + linesCleared * 4;  // 消除越多，粒子越多
+      
+      for (var i = 0; i < particleCount; i++) {
+        effects.push({
+          x: x + BLOCK_SIZE / 2,
+          y: y + BLOCK_SIZE / 2,
+          vx: (Math.random() - 0.5) * (8 + linesCleared * 2),  // 消除越多，速度越快
+          vy: (Math.random() - 0.5) * (8 + linesCleared * 2),
+          size: 3 + Math.random() * 5,
+          color: color,
+          alpha: 1,
+          decay: 0.02 + Math.random() * 0.02
+        });
+      }
+      
+      // 创建爆炸波纹效果
+      if (linesCleared >= 2) {
+        effects.push({
+          type: 'ripple',
+          x: x + BLOCK_SIZE / 2,
+          y: y + BLOCK_SIZE / 2,
+          radius: 0,
+          maxRadius: BLOCK_SIZE * (1 + linesCleared * 0.5),  // 消除越多，波纹越大
+          color: color,
+          alpha: 0.8,
+          lineWidth: 3 + linesCleared * 2
+        });
+      }
+    }
+  });
+  
+  // 消除4行时添加特殊效果
+  if (linesCleared === 4) {
+    createTetrisEffect();
+  }
+}
+
+function createTetrisEffect() {
+  // 添加闪光效果
+  effects.push({
+    type: 'flash',
+    alpha: 0,
+    maxAlpha: 0.3
+  });
+  
+  // 添加大量粒子爆发
+  for (var i = 0; i < 50; i++) {
+    var angle = (Math.PI * 2 * i) / 50;
+    var speed = 10 + Math.random() * 15;
+    
+    effects.push({
+      type: 'spark',
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: 2 + Math.random() * 4,
+      color: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'][Math.floor(Math.random() * 6)],
+      alpha: 1,
+      decay: 0.015
+    });
+  }
+}
+
+function animateEffects() {
+  if (!effectsCtx) return;
+  
+  effectsCtx.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);
+  
+  for (var i = effects.length - 1; i >= 0; i--) {
+    var effect = effects[i];
+    
+    if (effect.type === 'ripple') {
+      // 波纹效果
+      effectsCtx.beginPath();
+      effectsCtx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
+      effectsCtx.strokeStyle = effect.color;
+      effectsCtx.lineWidth = effect.lineWidth;
+      effectsCtx.globalAlpha = effect.alpha;
+      effectsCtx.stroke();
+      effectsCtx.globalAlpha = 1;
+      
+      effect.radius += 4;
+      effect.alpha -= 0.03;
+      effect.lineWidth *= 0.95;
+      
+      if (effect.alpha <= 0 || effect.lineWidth <= 0.5) {
+        effects.splice(i, 1);
+      }
+    } else if (effect.type === 'flash') {
+      // 闪光效果
+      effectsCtx.fillStyle = 'rgba(255, 255, 255, ' + effect.alpha + ')';
+      effectsCtx.fillRect(0, 0, effectsCanvas.width, effectsCanvas.height);
+      
+      if (effect.alpha < effect.maxAlpha) {
+        effect.alpha += 0.05;
+      } else {
+        effect.alpha -= 0.05;
+      }
+      
+      if (effect.alpha <= 0) {
+        effects.splice(i, 1);
+      }
+    } else if (effect.type === 'spark') {
+      // 火花效果
+      effectsCtx.beginPath();
+      effectsCtx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+      effectsCtx.fillStyle = effect.color;
+      effectsCtx.globalAlpha = effect.alpha;
+      effectsCtx.fill();
+      effectsCtx.globalAlpha = 1;
+      
+      effect.x += effect.vx;
+      effect.y += effect.vy;
+      effect.vy += 0.3;  // 重力
+      effect.alpha -= effect.decay;
+      
+      if (effect.alpha <= 0) {
+        effects.splice(i, 1);
+      }
+    } else {
+      // 普通粒子效果
+      effectsCtx.beginPath();
+      effectsCtx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+      effectsCtx.fillStyle = effect.color;
+      effectsCtx.globalAlpha = effect.alpha;
+      effectsCtx.fill();
+      effectsCtx.globalAlpha = 1;
+      
+      effect.x += effect.vx;
+      effect.y += effect.vy;
+      effect.vy += 0.2;  // 重力
+      effect.alpha -= effect.decay;
+      effect.size *= 0.98;
+      
+      if (effect.alpha <= 0) {
+        effects.splice(i, 1);
+      }
+    }
+  }
+  
+  requestAnimationFrame(animateEffects);
+}
+
+// ========================================
+// 开始提示系统
+// ========================================
+
+function showStartHint() {
+  var hint = document.getElementById('startHint');
+  if (!hint) return;
+  
+  hint.classList.add('show');
+  
+  // 点击开始按钮时隐藏提示
+  var startBtn = document.getElementById('startBtn');
+  if (startBtn) {
+    startBtn.addEventListener('click', function() {
+      hint.classList.remove('show');
+      setTimeout(function() {
+        hint.style.display = 'none';
+      }, 300);
+    });
+  }
 }
 
 window.onload = init;
