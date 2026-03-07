@@ -96,8 +96,40 @@ function spawnPiece() {
   
   if (checkCollision(currentPiece.x, currentPiece.y, currentPiece.shape)) {
     gameOver = true;
-    alert('游戏结束！得分：' + score);
+    showGameOverScreen();
   }
+}
+
+function showGameOverScreen() {
+  // 创建游戏结束覆盖层
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); display: flex; justify-content: center; align-items: center; z-index: 1000;';
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'background: white; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); max-width: 400px;';
+  
+  var title = document.createElement('h2');
+  title.textContent = '游戏结束';
+  title.style.cssText = 'color: #0f172a; font-size: 2rem; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.02em;';
+  
+  var scoreText = document.createElement('p');
+  scoreText.textContent = '最终得分: ' + score;
+  scoreText.style.cssText = 'color: #475569; font-size: 1.25rem; font-family: "JetBrains Mono", monospace; margin-bottom: 24px; font-variant-numeric: tabular-nums;';
+  
+  var restartBtn = document.createElement('button');
+  restartBtn.textContent = '重新开始';
+  restartBtn.style.cssText = 'padding: 14px 32px; font-size: 1rem; font-weight: 600; border: none; border-radius: 12px; background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); color: white; cursor: pointer; transition: all 0.3s;';
+  
+  restartBtn.addEventListener('click', function() {
+    document.body.removeChild(overlay);
+    startGame();
+  });
+  
+  modal.appendChild(title);
+  modal.appendChild(scoreText);
+  modal.appendChild(restartBtn);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
 }
 
 function createPiece() {
