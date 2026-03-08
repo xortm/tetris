@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>俄罗斯方块 - 简化版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #38bdf8;
+            margin-bottom: 20px;
+        }
+
+        .game-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        canvas {
+            border: 3px solid #334155;
+            border-radius: 12px;
+            background: #1a1a2e;
+        }
+
+        #gameCanvas { width: 300px; height: 600px; }
+        #nextCanvas { width: 100px; height: 100px; }
+
+        .side-panel {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            min-width: 150px;
+        }
+
+        .info-box {
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #38bdf8;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* 简化的按钮样式 - 移除所有可能影响点击的样式 */
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            background: #3b82f6;
+            transition: background 0.2s;
+            z-index: 10;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button:active {
+            background: #1d4ed8;
+        }
+
+        #startBtn {
+            background: #22c55e;
+        }
+
+        #startBtn:hover {
+            background: #16a34a;
+        }
+
+        #pauseBtn {
+            background: #f59e0b;
+        }
+
+        #pauseBtn:hover {
+            background: #d97706;
+        }
+
+        .message {
+            color: #22c55e;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            min-height: 27px;
+        }
+
+        .debug {
+            background: #1e293b;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 400px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .debug .entry {
+            padding: 2px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .debug .success { color: #22c55e; }
+        .debug .error { color: #ef4444; }
+        .debug .info { color: #38bdf8; }
+    </style>
+</head>
+<body>
+    <h1>🎮 俄罗斯方块（简化版）</h1>
+
+    <div class="game-container">
+        <canvas id="gameCanvas" width="300" height="600"></canvas>
+
+        <div class="side-panel">
+            <div class="info-box">
+                <div class="info-label">下一个</div>
+                <canvas id="nextCanvas" width="100" height="100"></canvas>
+            </div>
+
+            <div class="info-box">
+                <div class="info-label">分数</div>
+                <div class="info-value" id="score">0</div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-label">等级</div>
+                <div class="info-value" id="level">1</div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-label">消除行数</div>
+                <div class="info-value" id="lines">0</div>
+            </div>
+
+            <div class="controls">
+                <button id="startBtn" onclick="handleStartClick()">开始游戏</button>
+                <button id="pauseBtn" onclick="handlePauseClick()">暂停</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="message" id="message">点击"开始游戏"按钮</div>
+
+    <div class="debug" id="debug">
+        <div class="entry info">[系统] 页面加载完成</div>
+    </div>
+
+    <script>
+        // 调试日志
+        function log(message, type) {
+            const debug = document.getElementById('debug');
+            const entry = document.createElement('div');
+            entry.className = 'entry ' + (type || 'info');
+            const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+            entry.textContent = '[' + timestamp + '] ' + message;
+            debug.appendChild(entry);
+            debug.scrollTop = debug.scrollHeight;
+            console.log('[' + (type || 'info') + '] ' + message);
+        }
+
+        function showMessage(text) {
+            document.getElementById('message').textContent = text;
+        }
+
+        // 包装函数，用于调试
+        function handleStartClick() {
+            log('开始游戏按钮被点击（onclick）', 'success');
+            if (typeof startGame === 'function') {
+                try {
+                    startGame();
+                    log('startGame() 调用成功', 'success');
+                } catch (e) {
+                    log('startGame() 调用失败: ' + e.message, 'error');
+                }
+            } else {
+                log('startGame 函数不存在', 'error');
+            }
+        }
+
+        function handlePauseClick() {
+            log('暂停按钮被点击（onclick）', 'info');
+            if (typeof togglePause === 'function') {
+                try {
+                    togglePause();
+                    log('togglePause() 调用成功', 'success');
+                } catch (e) {
+                    log('togglePause() 调用失败: ' + e.message, 'error');
+                }
+            } else {
+                log('togglePause 函数不存在', 'error');
+            }
+        }
+
+        // 页面加载
+        window.addEventListener('load', function() {
+            log('window.onload 触发', 'info');
+
+            // 检查按钮元素
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+
+            if (startBtn) {
+                log('找到 startBtn 元素', 'success');
+            } else {
+                log('未找到 startBtn 元素', 'error');
+            }
+
+            if (pauseBtn) {
+                log('找到 pauseBtn 元素', 'success');
+            } else {
+                log('未找到 pauseBtn 元素', 'error');
+            }
+
+            // 加载 tetris.js
+            log('加载 tetris.js...', 'info');
+            const script = document.createElement('script');
+            script.src = 'tetris.js';
+            script.onload = function() {
+                log('tetris.js 加载成功', 'success');
+
+                // 检查游戏函数
+                if (typeof init === 'function') {
+                    log('init 函数存在', 'success');
+                } else {
+                    log('init 函数不存在', 'error');
+                }
+
+                if (typeof startGame === 'function') {
+                    log('startGame 函数存在', 'success');
+                } else {
+                    log('startGame 函数不存在', 'error');
+                }
+
+                if (typeof togglePause === 'function') {
+                    log('togglePause 函数存在', 'success');
+                } else {
+                    log('togglePause 函数不存在', 'error');
+                }
+            };
+            script.onerror = function() {
+                log('tetris.js 加载失败', 'error');
+            };
+            document.head.appendChild(script);
+        });
+
+        // 错误处理
+        window.addEventListener('error', function(event) {
+            log('JavaScript 错误: ' + event.message, 'error');
+            if (event.filename) {
+                log('  文件: ' + event.filename + ', 行: ' + event.lineno, 'error');
+            }
+        });
+    </script>
+</body>
+</html>
