@@ -275,6 +275,55 @@
             color: #38bdf8;
         }
 
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding-bottom: 280px;
+            }
+
+            .mobile-controls {
+                padding: 15px 10px;
+            }
+
+            .control-btn {
+                width: 65px;
+                height: 65px;
+            }
+
+            .action-buttons .control-btn {
+                width: 55px;
+                height: 55px;
+            }
+
+            .control-btn svg {
+                width: 32px;
+                height: 32px;
+            }
+
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .side-panel {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .controls {
+                width: 100%;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            #gameCanvas {
+                width: 280px;
+                height: 560px;
+            }
+        }
+
         /* 桌面端隐藏移动端控制 */
         @media (min-width: 769px) {
             .mobile-controls,
