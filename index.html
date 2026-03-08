@@ -362,6 +362,119 @@
                 font-size: 1.5rem;
             }
         }
+
+        /* 动画效果 */
+        .combo-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 200;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .combo-display.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .combo-text {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .combo-subtext {
+            font-size: 1.25rem;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+
+        .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .game-over-content {
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+            max-width: 90%;
+            width: 300px;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .game-over-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 16px;
+        }
+
+        .game-over-score {
+            font-size: 1.5rem;
+            color: #e2e8f0;
+            margin-bottom: 24px;
+            font-family: monospace;
+        }
+
+        .game-over-btn {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .game-over-btn:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            transform: scale(1.05);
+        }
+
+        .game-over-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
@@ -480,6 +593,18 @@
         <div class="score-item">
             <span class="score-label">等级</span>
             <span id="mobileLevelValue" class="score-value">1</span>
+        </div>
+    </div>
+
+    <!-- 连击显示 -->
+    <div class="combo-display" id="comboDisplay"></div>
+
+    <!-- 游戏结束覆盖层 -->
+    <div class="game-over-overlay" id="gameOverOverlay" style="display: none;">
+        <div class="game-over-content">
+            <div class="game-over-title">游戏结束</div>
+            <div class="game-over-score">最终得分: <span id="finalScore">0</span></div>
+            <button class="game-over-btn" onclick="restartGame()">重新开始</button>
         </div>
     </div>
 
@@ -634,9 +759,30 @@
 
             if (checkCollision(currentPiece.x, currentPiece.y, currentPiece.shape)) {
                 gameOver = true;
-                showMessage('游戏结束！点击"开始游戏"重新开始');
+                showGameOver();
                 log('游戏结束', 'error');
             }
+        }
+
+        function showGameOver() {
+            var overlay = document.getElementById('gameOverOverlay');
+            var finalScore = document.getElementById('finalScore');
+            
+            if (finalScore) {
+                finalScore.textContent = score;
+            }
+            
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
+        }
+
+        function restartGame() {
+            var overlay = document.getElementById('gameOverOverlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+            startGame();
         }
 
         function checkCollision(x, y, shape) {
@@ -749,8 +895,57 @@
             }
 
             if (linesCleared > 0) {
+                showCombo(linesCleared);
                 updateScore(linesCleared);
             }
+        }
+
+        function showCombo(linesCleared) {
+            var comboDisplay = document.getElementById('comboDisplay');
+            if (!comboDisplay) return;
+
+            var text = '';
+            var subtext = '';
+
+            switch(linesCleared) {
+                case 1:
+                    text = 'SINGLE!';
+                    subtext = '消除 1 行';
+                    break;
+                case 2:
+                    text = 'DOUBLE!!';
+                    subtext = '消除 2 行';
+                    break;
+                case 3:
+                    text = 'TRIPLE!!!';
+                    subtext = '消除 3 行';
+                    break;
+                case 4:
+                    text = 'TETRIS!!!!';
+                    subtext = '完美消除!';
+                    break;
+                default:
+                    text = linesCleared + ' LINES!';
+                    subtext = '超级连击!';
+            }
+
+            comboDisplay.innerHTML = '';
+
+            var textEl = document.createElement('div');
+            textEl.className = 'combo-text';
+            textEl.textContent = text;
+            comboDisplay.appendChild(textEl);
+
+            var subtextEl = document.createElement('div');
+            subtextEl.className = 'combo-subtext';
+            subtextEl.textContent = subtext;
+            comboDisplay.appendChild(subtextEl);
+
+            comboDisplay.classList.add('show');
+
+            setTimeout(function() {
+                comboDisplay.classList.remove('show');
+            }, 1500);
         }
 
         function updateScore(lines) {
