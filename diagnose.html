@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏诊断 - Tetris Debug</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        .log {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 3px solid #3b82f6;
+            background: #1e293b;
+        }
+        .success { border-color: #22c55e; color: #86efac; }
+        .error { border-color: #ef4444; color: #fca5a5; }
+        .warning { border-color: #f59e0b; color: #fcd34d; }
+        .info { border-color: #3b82f6; color: #93c5fd; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>🔍 俄罗斯方块游戏诊断工具</h1>
+    <div id="logs"></div>
+    <button onclick="runDiagnostics()">运行诊断</button>
+    <button onclick="testGameInit()">测试游戏初始化</button>
+    <button onclick="testElements()">测试 DOM 元素</button>
+    <button onclick="clearLogs()">清除日志</button>
+
+    <script>
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.appendChild(div);
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        function testElements() {
+            log('=== 测试 DOM 元素 ===', 'info');
+
+            const elements = [
+                'gameCanvas',
+                'nextCanvas',
+                'startBtn',
+                'pauseBtn',
+                'score',
+                'level',
+                'lines',
+                'mobileControls',
+                'comboDisplay',
+                'startHint',
+                'effectsCanvas'
+            ];
+
+            let found = 0;
+            let missing = 0;
+
+            elements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    log(`✓ 找到元素: ${id}`, 'success');
+                    found++;
+                } else {
+                    log(`✗ 缺失元素: ${id}`, 'error');
+                    missing++;
+                }
+            });
+
+            log(`元素测试完成: ${found} 个找到, ${missing} 个缺失`, found === elements.length ? 'success' : 'warning');
+        }
+
+        function runDiagnostics() {
+            log('=== 开始完整诊断 ===', 'info');
+
+            // 检查浏览器环境
+            log('浏览器: ' + navigator.userAgent, 'info');
+            log('屏幕尺寸: ' + window.innerWidth + 'x' + window.innerHeight, 'info');
+            log('触摸支持: ' + ('ontouchstart' in window), 'info');
+
+            // 检查 DOM 元素
+            testElements();
+
+            // 检查脚本加载
+            log('检查 tetris.js 脚本...', 'info');
+            const scripts = {
+                'tetris.js': false
+            };
+
+            document.querySelectorAll('script').forEach(script => {
+                const src = script.src || 'inline';
+                log(`加载的脚本: ${src}`, 'info');
+            });
+
+            log('=== 诊断完成 ===', 'success');
+        }
+
+        function testGameInit() {
+            log('=== 测试游戏初始化 ===', 'info');
+
+            try {
+                // 检查关键变量
+                if (typeof createBoard === 'function') {
+                    log('✓ createBoard 函数存在', 'success');
+                } else {
+                    log('✗ createBoard 函数不存在', 'error');
+                }
+
+                if (typeof init === 'function') {
+                    log('✓ init 函数存在', 'success');
+                } else {
+                    log('✗ init 函数不存在', 'error');
+                }
+
+                if (typeof startGame === 'function') {
+                    log('✓ startGame 函数存在', 'success');
+                } else {
+                    log('✗ startGame 函数不存在', 'error');
+                }
+
+                // 检查 TETROMINOES
+                if (typeof TETROMINOES !== 'undefined') {
+                    log('✓ TETROMINOES 定义存在', 'success');
+                    log(`方块类型: ${Object.keys(TETROMINOES).join(', ')}`, 'info');
+                } else {
+                    log('✗ TETROMINOES 未定义', 'error');
+                }
+
+                log('=== 游戏初始化测试完成 ===', 'success');
+
+            } catch (error) {
+                log('✗ 错误: ' + error.message, 'error');
+                log('堆栈: ' + error.stack, 'error');
+            }
+        }
+
+        // 页面加载时自动运行诊断
+        window.addEventListener('load', function() {
+            log('页面加载完成', 'success');
+            setTimeout(runDiagnostics, 500);
+        });
+
+        // 监听错误
+        window.addEventListener('error', function(event) {
+            log('JavaScript 错误: ' + event.message, 'error');
+            if (event.filename) {
+                log('文件: ' + event.filename + ' 行: ' + event.lineno, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

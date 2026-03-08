@@ -48,10 +48,10 @@
                     </div>
 
                     <div class="controls">
-                        <button id="startBtn" class="btn-primary" onclick="startGame()">
+                        <button id="startBtn" class="btn-primary">
                             <span class="btn-text">开始游戏</span>
                         </button>
-                        <button id="pauseBtn" class="btn-secondary" onclick="togglePause()">
+                        <button id="pauseBtn" class="btn-secondary">
                             <span class="btn-text">暂停</span>
                         </button>
                     </div>
@@ -162,6 +162,34 @@
             <p>点击"开始游戏"</p>
         </div>
     </div>
+
+    <script>
+        // 在加载 tetris.js 之前，确保全局函数可用
+        window.gameReady = false;
+
+        // 监听 tetris.js 加载完成
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                // 尝试直接绑定按钮
+                var startBtn = document.getElementById('startBtn');
+                var pauseBtn = document.getElementById('pauseBtn');
+
+                if (startBtn && typeof startGame === 'function') {
+                    startBtn.onclick = function() {
+                        console.log('开始游戏按钮被点击');
+                        startGame();
+                    };
+                }
+
+                if (pauseBtn && typeof togglePause === 'function') {
+                    pauseBtn.onclick = function() {
+                        console.log('暂停按钮被点击');
+                        togglePause();
+                    };
+                }
+            }, 500);
+        });
+    </script>
 
     <script src="tetris.js"></script>
 </body>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试 - Tetris Debug</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #38bdf8;
+            margin-bottom: 20px;
+        }
+
+        .section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            color: #38bdf8;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .log {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 2px 0;
+        }
+
+        .log-info { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        .log-success { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+        .log-error { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .log-warn { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .info-item {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            color: #38bdf8;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-ok { background: #22c55e; }
+        .status-error { background: #ef4444; }
+        .status-warn { background: #f59e0b; }
+        .status-unknown { background: #64748b; }
+
+        canvas {
+            border: 2px solid #334155;
+            border-radius: 8px;
+            background: #1a1a2e;
+            margin: 10px 0;
+        }
+
+        #gameCanvas { width: 300px; height: 600px; }
+        #nextCanvas { width: 100px; height: 100px; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 俄罗斯方块调试工具</h1>
+
+        <div class="section">
+            <h2>浏览器信息</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">User Agent</div>
+                    <div class="info-value" id="userAgent"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">屏幕尺寸</div>
+                    <div class="info-value" id="screenSize"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">触摸支持</div>
+                    <div class="info-value" id="touchSupport"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">JavaScript 启用</div>
+                    <div class="info-value" id="jsEnabled"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>DOM 元素检查</h2>
+            <div id="elementStatus"></div>
+            <div class="btn-group">
+                <button class="btn" onclick="checkElements()">检查元素</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>游戏函数检查</h2>
+            <div id="functionStatus"></div>
+            <div class="btn-group">
+                <button class="btn" onclick="checkFunctions()">检查函数</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>游戏状态</h2>
+            <div id="gameStatus"></div>
+            <div class="btn-group">
+                <button class="btn" onclick="checkGameState()">检查状态</button>
+                <button class="btn" onclick="init()">调用 init()</button>
+                <button class="btn" onclick="startGame()">调用 startGame()</button>
+                <button class="btn" onclick="resetGame()">调用 resetGame()</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>模拟 Canvas 测试</h2>
+            <div>
+                <canvas id="gameCanvas"></canvas>
+                <canvas id="nextCanvas"></canvas>
+            </div>
+            <div class="btn-group">
+                <button class="btn" onclick="testCanvas()">测试 Canvas</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>日志</h2>
+            <div class="log" id="log"></div>
+            <div class="btn-group">
+                <button class="btn" onclick="clearLogs()">清除日志</button>
+                <button class="btn" onclick="runAllTests()">运行所有测试</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载游戏代码 -->
+    <script>
+        // 日志系统
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearLogs() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // 浏览器信息
+        function showBrowserInfo() {
+            document.getElementById('userAgent').textContent =
+                navigator.userAgent.substring(0, 80) + '...';
+            document.getElementById('screenSize').textContent =
+                `${window.innerWidth} × ${window.innerHeight}`;
+            document.getElementById('touchSupport').textContent =
+                'ontouchstart' in window ? '是' : '否';
+            document.getElementById('jsEnabled').textContent = '是';
+        }
+
+        // 检查 DOM 元素
+        function checkElements() {
+            const elements = {
+                'gameCanvas': '游戏画布',
+                'nextCanvas': '下一个方块画布',
+                'startBtn': '开始按钮',
+                'pauseBtn': '暂停按钮',
+                'score': '分数显示',
+                'level': '等级显示',
+                'lines': '消除行数显示'
+            };
+
+            const statusDiv = document.getElementById('elementStatus');
+            statusDiv.innerHTML = '';
+
+            let found = 0;
+            let missing = 0;
+
+            Object.entries(elements).forEach(([id, name]) => {
+                const el = document.getElementById(id);
+                const item = document.createElement('div');
+                item.className = 'info-item';
+
+                const indicator = document.createElement('span');
+                indicator.className = 'status-indicator ' + (el ? 'status-ok' : 'status-error');
+
+                const label = document.createElement('div');
+                label.className = 'info-label';
+                label.textContent = id;
+
+                const value = document.createElement('div');
+                value.className = 'info-value';
+                value.textContent = el ? `${name} ✓` : `${name} ✗ 未找到`;
+
+                item.appendChild(indicator);
+                item.appendChild(label);
+                item.appendChild(value);
+                statusDiv.appendChild(item);
+
+                if (el) {
+                    found++;
+                    log(`找到元素: ${id} (${name})`, 'success');
+                } else {
+                    missing++;
+                    log(`缺失元素: ${id} (${name})`, 'error');
+                }
+            });
+
+            log(`元素检查完成: ${found} 个找到, ${missing} 个缺失`, found === Object.keys(elements).length ? 'success' : 'warn');
+        }
+
+        // 检查游戏函数
+        function checkFunctions() {
+            const functions = {
+                'init': '初始化函数',
+                'startGame': '开始游戏',
+                'resetGame': '重置游戏',
+                'togglePause': '暂停/继续',
+                'spawnPiece': '生成方块',
+                'moveDown': '向下移动',
+                'moveLeft': '向左移动',
+                'moveRight': '向右移动',
+                'rotate': '旋转',
+                'hardDrop': '快速下落',
+                'checkCollision': '碰撞检测',
+                'lockPiece': '锁定方块',
+                'clearLines': '消除行',
+                'drawBoard': '绘制棋盘'
+            };
+
+            const statusDiv = document.getElementById('functionStatus');
+            statusDiv.innerHTML = '';
+
+            Object.entries(functions).forEach(([name, desc]) => {
+                const exists = typeof window[name] === 'function';
+                const item = document.createElement('div');
+                item.className = 'info-item';
+
+                const indicator = document.createElement('span');
+                indicator.className = 'status-indicator ' + (exists ? 'status-ok' : 'status-error');
+
+                const label = document.createElement('div');
+                label.className = 'info-label';
+                label.textContent = name;
+
+;
+
+                const value = document.createElement('div');
+                value.className = 'info-value';
+                value.textContent = exists ? `${desc} ✓` : `${desc} ✗ 未定义`;
+
+                item.appendChild(indicator);
+                item.appendChild(label);
+                item.appendChild(value);
+                statusDiv.appendChild(item);
+
+                if (exists) {
+                    log(`函数存在: ${name} (${desc})`, 'success');
+                } else {
+                    log(`函数缺失: ${name} (${desc})`, 'error');
+                }
+            });
+        }
+
+        // 检查游戏状态
+        function checkGameState() {
+            const statusDiv = document.getElementById('gameStatus');
+            statusDiv.innerHTML = '';
+
+            const variables = [
+                'score', 'level', 'lines', 'gameOver', 'isPaused',
+                'dropBoardInterval', 'currentPiece', 'nextPiece', 'board'
+            ];
+
+            variables.forEach(name => {
+                const value = window[name];
+                const item = document.createElement('div');
+                item.className = 'info-item';
+
+                const label = document.createElement('div');
+                label.className = 'info-label';
+                label.textContent = name;
+
+                const valueDiv = document.createElement('div');
+                valueDiv.className = 'info-value';
+
+                if (value === undefined || value === null) {
+                    valueDiv.textContent = '未定义';
+                } else if (typeof value === 'object' && value !== null) {
+                    valueDiv.textContent = `Object (${Object.keys(value).length} keys)`;
+                } else {
+                    valueDiv.textContent = String(value);
+                }
+
+                item.appendChild(label);
+                item.appendChild(valueDiv);
+                statusDiv.appendChild(item);
+
+                log(`${name} = ${valueDiv.textContent}`, 'info');
+            });
+        }
+
+        // 测试 Canvas
+        function testCanvas() {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制测试方块
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(50, 50, 50, 50);
+
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(100, 100, 50, 50);
+
+            log('Canvas 测试成功 - 绘制了两个测试方块', 'success');
+        }
+
+        // 运行所有测试
+        function runAllTests() {
+            clearLogs();
+            log('开始运行所有测试...', 'info');
+
+            setTimeout(() => {
+                showBrowserInfo();
+                checkElements();
+                checkFunctions();
+                checkGameState();
+
+                log('所有测试完成', 'success');
+            }, 100);
+        }
+
+        // 页面加载时运行
+        window.addEventListener('load', () => {
+            log('页面加载完成', 'success');
+            showBrowserInfo();
+            checkElements();
+
+            // 监听错误
+            window.addEventListener('error', (event) => {
+                log(`JavaScript 错误: ${event.message}`, 'error');
+                if (event.filename) {
+                    log(`  文件: ${event.filename}, 行: ${event.lineno}`, 'error');
+                }
+            });
+
+            // 加载游戏代码
+            log('加载 tetris.js...', 'info');
+            const script = document.createElement('script');
+            script.src = 'tetris.js';
+            script.onload = () => {
+                log('tetris.js 加载成功', 'success');
+                checkFunctions();
+            };
+            script.onerror = () => {
+                log('tetris.js 加载失败', 'error');
+            };
+            document.head.appendChild(script);
+        });
+    </script>
+</body>
+</html>
